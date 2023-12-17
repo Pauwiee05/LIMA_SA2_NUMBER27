@@ -1,0 +1,99 @@
+---
+title: "LIMA_SA2_NUMBER27"
+output: html_document
+date: "2023-12-17"
+---
+
+## Dataset Description
+
+Researchers are interested in knowing if four different milage of cars. Thus, the researchers used four different engine oils to test this through measuring the milage of five different cars. They apply a repeated-measures ANOVA to see if the mean reaction time varies amongst engine oils because each car’s milage is determined by applying each of the four engine lubricants on at a time.
+
+### Checking of Assumptions
+
+**Assumption #1:**
+
+The dependent variable, Mileage, is measured at the continuous level.
+
+**Assumption #2:**
+The independent variable, Oil, has four categorical levels: 1, 2, 3, 4.
+
+**Assumption #3:**
+There were no significant outliers in the four levels of Oil, as assessed by the visual inspection of boxplots.
+
+
+```{r boxplot, echo=FALSE}
+library(tidyverse)
+library(rstatix)
+library(car)
+library(ggplot2)
+library(lme4)
+
+# Load the data of the study
+dataframe <- data.frame('Cars' = rep(1:5, each = 4),
+                        'Oil' = rep(1:4, times = 5),
+                        'Mileage' = c(36, 38, 30, 29,
+                                      34, 38, 30, 29,
+                                      34, 28, 38, 32,
+                                      38, 34, 20, 44,
+                                      26, 28, 34, 50))
+dataframe$Oil <- as.factor(dataframe$Oil)
+
+#TheBOXPLOT
+ggplot(dataframe, aes(x = factor(Oil), y = Mileage)) +
+  geom_boxplot() +
+  labs(x = "Engine Oil", y = "Mileage") +
+  ggtitle("Boxplot of Mileage for Each Engine Oil Level")
+
+```
+
+
+**Assumption #4:**
+The distribution of the dependent variable, Milage,in the four levels of oil was approximately normally distributed, as assessed by Shapiro-Wilk test, p >0.05
+
+```{r shapiro, echo=FALSE}
+
+#SHAPIRO-WILK TEST
+shapiro_test <- dataframe %>%
+  group_by(Oil) %>%
+  summarise(p_value = shapiro.test(Mileage)$p.value)
+print(shapiro_test)
+
+
+``` 
+
+**Assumption #5:**
+The variances of the differences between all combinations of levels of oil is greater than p > 0.05, Thus the assumption of sphericity is not violated.
+
+**COMPUTATION**
+
+```{r maulchy, echo=FALSE}
+
+# MAULCHY's Test 
+mauchly_test <- dataframe %>%
+  anova_test(dv = Mileage, wid = Cars, within = Oil, detailed = TRUE)
+print(mauchly_test)
+
+# POST-HOC Test
+posthoc <- dataframe %>%
+  pairwise_t_test(
+    Mileage ~ Oil,
+    paired = TRUE,
+    p.adjust.method = "holm",
+    effect.size = "cohen.d"
+  )
+print(posthoc)
+
+``` 
+
+**Report:**
+
+The statistical significance of the changes in mileage of five cars using four different oils was assessed using a one-way repeated measures ANOVA. According to the boxplot and Shapiro-Wilk test (p >0.05), there were no outliers and the data was regularly distributed. According to Maulchy's test of sphericity, which yielded a p-value of 0.659, the sphericity assumption was not broken. There were no noticeable mileage differences between any pair of engine oils according to the Post-Hoc Test (p > 0.05).
+Hence, we can conclude that there are no significant difference between the milage of cars and oils
+
+
+
+
+
+
+
+
